@@ -32,6 +32,7 @@
 #else
 #include <sys/time.h>
 #include <unistd.h>
+#include <termios.h>
 #endif
 
 #include <stdio.h>
@@ -334,6 +335,26 @@ int main(int parc, char **pars)
     if (opt_serial) {
         setvbuf(stdout, NULL, _IONBF, 0);
         setvbuf(stderr, NULL, _IONBF, 0);
+        if (isatty(STDOUT_FILENO)) {
+            struct termios term;
+
+            // Get current terminal attributes for STDOUT_FILENO (usually the PTY)
+            if (tcgetattr(STDOUT_FILENO, &term) < 0) {
+                perror("tcgetattr");
+                return 1;
+            }
+
+            // Clear the ONLCR flag to prevent conversion of \n to \r\n
+            term.c_oflag &= ~ONLCR;
+            // Disable echoing of input characters
+            term.c_lflag &= ~ECHO;
+
+            // Apply the new attributes immediately
+            if (tcsetattr(STDOUT_FILENO, TCSANOW, &term) < 0) {
+                perror("tcsetattr");
+                return 1;
+            }
+        }
         char assembly[128];
         uint16_t oldpc = -1;
         uint8_t idx = 0;
