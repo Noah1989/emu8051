@@ -42,11 +42,13 @@ int opt_exception_acc_to_a = 1;
 int opt_exception_stack = 1;
 int opt_exception_invalid = 1;
 int opt_input_outputlow = 1;
-int opt_clock_select = 3;
-int opt_clock_hz = 12*1000*1000;
+int opt_clock_select = 0;
+int opt_clock_hz = 40*1000*1000;
 int opt_step_instruction = 0;
+int opt_serial = 0;
 
 int clockspeeds[] = { 
+    40*1000*1000,
     33*1000*1000,
     24*1000*1000, 
       221184*100,
@@ -134,13 +136,13 @@ void options_editor_keys(struct em8051 *aCPU, int ch)
         {
         case 1:
             opt_clock_select++;
-            if (opt_clock_select > 12)
-                opt_clock_select = 12;
-            if (opt_clock_select == 12)
+            if (opt_clock_select > 13)
+                opt_clock_select = 13;
+            if (opt_clock_select == 13)
                 opt_clock_hz = emu_readhz(aCPU, "Enter custom clock speed", opt_clock_hz);
             else
                 opt_clock_hz = clockspeeds[opt_clock_select];
-            if (opt_clock_hz == 0) 
+            if (opt_clock_hz <= 0) 
                 opt_clock_hz = 1;
             break;
         case 2:

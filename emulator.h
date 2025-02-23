@@ -63,7 +63,7 @@ extern int view;
 extern int pout[];
 
 // current clock count
-extern unsigned int clocks;
+extern unsigned long long int clocks;
 
 extern int opt_exception_iret_sp;
 extern int opt_exception_iret_acc;
@@ -75,6 +75,7 @@ extern int opt_clock_select;
 extern int opt_clock_hz;
 extern int opt_step_instruction;
 extern int opt_input_outputlow;
+extern int opt_serial;
 
 
 

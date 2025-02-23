@@ -488,7 +488,9 @@ bool tick(struct em8051 *aCPU)
         aCPU->mSFR[REG_PSW] = (aCPU->mSFR[REG_PSW] & ~PSWMASK_P) | (v * PSWMASK_P);
     }
 
-    timer_tick(aCPU);
+    //timer_tick(aCPU);
+    // TODO: emulate BRG correctly
+    serial_tx(aCPU);
 
     return ticked;
 }

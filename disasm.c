@@ -134,6 +134,14 @@ void mem_memonic(int aValue, char *aBuffer)
             strcpy(aBuffer, "SBUF");
             done = 1;
             break;
+        case REG_BRL:
+            strcpy(aBuffer, "BRL");
+            done = 1;
+            break;
+        case REG_BDRCON:
+            strcpy(aBuffer, "BDRCON");
+            done = 1;
+            break;
         }
     }
     if (!done)
