@@ -445,53 +445,45 @@ void handle_interrupts(struct em8051 *aCPU)
     aCPU->int_sp[hi] = aCPU->mSFR[REG_SP];
 }
 
-bool tick(struct em8051 *aCPU)
+bool cpu_tick(struct em8051 *aCPU)
 {
-    uint8_t v;
-    bool ticked = false;
-
     if (aCPU->mTickDelay)
     {
         aCPU->mTickDelay--;
+        return 0;
     }
 
-    // Test for Power Down
-    if (aCPU->mTickDelay == 0 && (aCPU->mSFR[REG_PCON]) & 0x02) {
-        aCPU->mTickDelay = 1;
-        return 1;
+    // interrupts are handled at instruction boundary
+    handle_interrupts(aCPU);
+
+    // CPU does nothing in PD (power down) or IDL (idle) mode
+    if (aCPU->mSFR[REG_PCON] & 0x03) {
+        return 0;
     }
 
-    // Interrupts are sent if the following cases are not true:
-    // 1. interrupt of equal or higher priority is in progress (tested inside function)
-    // 2. current cycle is not the final cycle of instruction (tickdelay = 0)
-    // 3. the instruction in progress is RETI or any write to the IE or IP regs (TODO)
-    if (aCPU->mTickDelay == 0)
-    {
-        handle_interrupts(aCPU);
-    }
+    aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[aCPU->mPC & (aCPU->mCodeMemMaxIdx)]](aCPU);
+    // update parity bit
+    uint8_t v = aCPU->mSFR[REG_ACC];
+    v ^= v >> 4;
+    v &= 0xf;
+    v = (0x6996 >> v) & 1;
+    aCPU->mSFR[REG_PSW] = (aCPU->mSFR[REG_PSW] & ~PSWMASK_P) | (v * PSWMASK_P);
 
-    if (aCPU->mTickDelay == 0)
-    {
-        // IDL activate the idle mode to save power
-        bool is_idle = (aCPU->mSFR[REG_PCON]) & 0x01;
-        if (is_idle) {
-            aCPU->mTickDelay = 1;
-        } else {
-            aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[aCPU->mPC & (aCPU->mCodeMemMaxIdx)]](aCPU);
-        }
-        ticked = true;
-        // update parity bit
-        v = aCPU->mSFR[REG_ACC];
-        v ^= v >> 4;
-        v &= 0xf;
-        v = (0x6996 >> v) & 1;
-        aCPU->mSFR[REG_PSW] = (aCPU->mSFR[REG_PSW] & ~PSWMASK_P) | (v * PSWMASK_P);
-    }
+    return 1;
+}
 
-    //timer_tick(aCPU);
+void peripheral_tick(struct em8051 *aCPU)
+{
+    timer_tick(aCPU);
     // TODO: emulate BRG correctly
     serial_tx(aCPU);
+}
 
+// simulate one machine cycle (typically 12 clock cycles)
+bool tick(struct em8051 *aCPU)
+{
+    bool ticked = cpu_tick(aCPU);
+    peripheral_tick(aCPU);
     return ticked;
 }
 

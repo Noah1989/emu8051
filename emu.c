@@ -338,9 +338,9 @@ int main(int parc, char **pars)
         uint16_t oldpc = -1;
         uint8_t idx = 0;
         while (1) {
-            if (emu.mPC != oldpc) {
+            if (emu.mTickDelay == 0 && emu.mPC != oldpc) {
                 decode(&emu, emu.mPC, assembly);
-                fprintf(stderr, "%04x %s\n", emu.mPC, assembly);
+                fprintf(stderr, "%llu %04x %s\n", clocks, emu.mPC, assembly);
                 oldpc = emu.mPC;
             }
             tick(&emu);
@@ -370,7 +370,7 @@ int main(int parc, char **pars)
     setSpeed(speed, runmode);
 
 
-    //  Switch of echoing and enable keypad (for arrow keys etc)
+    //  Switch of echoing and enable keypad (for arrow keys etc.)
 
     cbreak(); // no buffering
     noecho(); // no echoing
